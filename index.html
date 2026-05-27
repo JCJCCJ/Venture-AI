@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Mogul AI</title>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#f8f7f4;--surface:#fff;--surface2:#f2f4f9;
+  --navy:#0f1e3c;--navy2:#1a3160;--navy3:#243d6e;
+  --gold:#b8955a;--gold2:#c9a96b;--goldbg:rgba(184,149,90,.08);
+  --border:rgba(15,30,60,.08);--border2:rgba(15,30,60,.14);
+  --text:#0f1e3c;--muted:#6b7a99;--muted2:#9aa3ba;
+  --shadow:0 2px 20px rgba(15,30,60,.06);--shadow2:0 8px 40px rgba(15,30,60,.11);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;z-index:100;background:rgba(248,247,244,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 6%;}
+.nav-inner{max-width:1280px;margin:auto;display:flex;align-items:center;justify-content:space-between;height:68px;}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:500;letter-spacing:.06em;color:var(--navy);cursor:pointer;}
+.logo span{color:var(--gold);}
+.nav-links{display:flex;gap:2.5rem;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.nav-links span{cursor:pointer;transition:.2s;}.nav-links span:hover{color:var(--navy);}
+.nav-right{display:flex;gap:.7rem;align-items:center;}
+.nav-user{font-size:.78rem;color:var(--muted);}
+.nav-btn{background:var(--navy);color:#fff;font-weight:500;padding:.45rem 1.3rem;border-radius:3px;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:none;transition:.3s;}
+.nav-btn:hover{background:var(--navy2);}
+.nav-btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+.nav-btn.ghost:hover{border-color:var(--navy);color:var(--navy);}
+
+.page{display:none;padding-top:68px;}.page.active{display:block;}
+
+/* HERO */
+.hero{min-height:96vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:5rem 6%;position:relative;overflow:hidden;background:var(--navy);}
+#heroCanvas{position:absolute;inset:0;width:100%;height:100%;}
+.hero-content{position:relative;z-index:2;max-width:820px;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:.7rem;margin-bottom:2rem;padding:.35rem 1.2rem;border:1px solid rgba(184,149,90,.3);border-radius:2px;background:rgba(184,149,90,.08);}
+.hero-eyebrow span{font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold2);}
+.hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.8rem,6.5vw,5.6rem);font-weight:300;line-height:1.08;margin-bottom:1.8rem;color:#fff;}
+.hero h1 em{font-style:italic;color:var(--gold2);}
+.hero p{font-size:.93rem;color:rgba(255,255,255,.6);max-width:500px;margin:0 auto 2.5rem;line-height:1.9;}
+.hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+.btn-gold{background:var(--gold);color:#fff;font-weight:600;padding:.85rem 2.4rem;border-radius:3px;font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;border:none;transition:.3s;}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-1px);}
+.btn-white{background:transparent;color:#fff;padding:.85rem 2.4rem;border-radius:3px;font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;border:1px solid rgba(255,255,255,.22);transition:.3s;}
+.btn-white:hover{border-color:rgba(255,255,255,.55);}
+.hero-scroll{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;opacity:.3;}
+.hero-scroll span{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:#fff;}
+.scroll-line{width:1px;height:36px;background:linear-gradient(to bottom,var(--gold2),transparent);animation:scrollpulse 2s ease-in-out infinite;}
+@keyframes scrollpulse{0%,100%{opacity:.3;}50%{opacity:1;}}
+
+/* STATS */
+.stats-bar{background:var(--navy);border-top:1px solid rgba(255,255,255,.06);padding:2.2rem 6%;}
+.stats-inner{max-width:1280px;margin:auto;display:flex;justify-content:center;gap:5rem;flex-wrap:wrap;}
+.stat{text-align:center;}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:400;color:var(--gold2);}
+.stat-label{font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:.3rem;}
+
+section{padding:6rem 6%;}
+.section-inner{max-width:1280px;margin:auto;}
+.section-eyebrow{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem;}
+.section-line{width:28px;height:1px;background:var(--gold);}
+.section-eyebrow span{font-size:.67rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,3.5vw,3rem);font-weight:400;line-height:1.15;margin-bottom:.8rem;color:var(--navy);}
+.section-title em{font-style:italic;color:var(--gold);}
+.section-sub{color:var(--muted);font-size:.86rem;max-width:500px;line-height:1.85;}
+
+/* CAROUSEL */
+.carousel-outer{overflow:hidden;width:100%;}
+.carousel-track{display:flex;transition:transform .55s cubic-bezier(.25,.46,.45,.94);will-change:transform;}
+.c-card{background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:box-shadow .3s,transform .3s;position:relative;flex-shrink:0;}
+.c-card:hover{box-shadow:var(--shadow2);transform:translateY(-3px);}
+.c-cover-ph{display:flex;align-items:center;justify-content:center;}
+.c-cover-num{font-family:'Cormorant Garamond',serif;font-size:4rem;font-weight:300;color:rgba(255,255,255,.13);}
+.c-badge{position:absolute;top:12px;left:12px;color:#fff;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:.24rem .7rem;font-weight:600;}
+.c-body{padding:1.5rem;}
+.c-tag{font-size:.63rem;letter-spacing:.17em;text-transform:uppercase;color:var(--gold);margin-bottom:.45rem;}
+.c-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--navy);margin-bottom:.45rem;line-height:1.3;}
+.c-desc{font-size:.78rem;color:var(--muted);line-height:1.75;margin-bottom:1.2rem;}
+.c-footer{display:flex;align-items:center;justify-content:space-between;padding-top:.9rem;border-top:1px solid var(--border);}
+.c-price{font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--navy);}
+.c-cta{font-size:.67rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);cursor:pointer;background:none;border:none;font-weight:500;transition:.2s;}
+.c-cta:hover{color:var(--navy);}
+.carousel-controls{display:flex;align-items:center;justify-content:space-between;margin-top:2rem;}
+.carousel-dots{display:flex;gap:.5rem;align-items:center;}
+.c-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);cursor:pointer;transition:.3s;}
+.c-dot.active{background:var(--gold);width:22px;border-radius:3px;}
+.carousel-arrows{display:flex;gap:.7rem;}
+.c-arrow{width:42px;height:42px;border-radius:50%;border:1px solid var(--border2);background:var(--surface);color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:.3s;}
+.c-arrow:hover:not(:disabled){background:var(--navy);color:#fff;border-color:var(--navy);}
+.c-arrow:disabled{opacity:.3;cursor:not-allowed;}
+
+/* RECOMMENDED */
+.rec-section{background:var(--navy);padding:6rem 6%;}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem;margin-top:3rem;}
+.rec-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);padding:2rem;cursor:pointer;transition:.3s;position:relative;overflow:hidden;}
+.rec-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:0;background:var(--gold);transition:.4s;}
+.rec-card:hover::before{height:100%;}
+.rec-card:hover{background:rgba(255,255,255,.07);transform:translateY(-2px);}
+.rec-num{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:300;color:rgba(255,255,255,.09);margin-bottom:.7rem;}
+.rec-tag{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:.45rem;}
+.rec-title{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:#fff;margin-bottom:.55rem;line-height:1.35;}
+.rec-desc{font-size:.77rem;color:rgba(255,255,255,.42);line-height:1.78;margin-bottom:1.2rem;}
+.rec-footer{display:flex;align-items:center;justify-content:space-between;}
+.rec-price{font-size:.85rem;color:var(--gold2);font-weight:500;}
+.rec-cta{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45);cursor:pointer;background:none;border:none;transition:.2s;}
+.rec-card:hover .rec-cta{color:var(--gold);}
+
+/* FOUNDER QUOTE */
+.founder-section{background:var(--surface2);padding:6rem 6%;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.founder-inner{max-width:800px;margin:auto;text-align:center;}
+.founder-quote-mark{font-family:'Cormorant Garamond',serif;font-size:6rem;font-weight:300;color:var(--gold);line-height:.6;margin-bottom:1.5rem;opacity:.5;}
+.founder-quote{font-family:'Cormorant Garamond',serif;font-size:clamp(1.2rem,2.2vw,1.7rem);font-weight:300;font-style:italic;color:var(--navy);line-height:1.7;margin-bottom:2.5rem;}
+.founder-attr{display:flex;align-items:center;justify-content:center;gap:1.2rem;}
+.founder-line{width:36px;height:1px;background:var(--gold);flex-shrink:0;}
+.founder-name{font-size:.82rem;font-weight:600;color:var(--navy);letter-spacing:.08em;text-transform:uppercase;}
+.founder-role{font-size:.72rem;color:var(--muted);margin-top:.2rem;letter-spacing:.04em;}
+
+/* CTA BANNER */
+.cta-banner{background:linear-gradient(135deg,var(--navy),var(--navy3));padding:5rem 6%;text-align:center;position:relative;overflow:hidden;}
+.cta-banner::before{content:'';position:absolute;top:-30%;right:-5%;width:480px;height:480px;border-radius:50%;background:rgba(184,149,90,.05);pointer-events:none;}
+.cta-inner{position:relative;z-index:1;max-width:680px;margin:auto;}
+.cta-inner h2{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:300;color:#fff;margin-bottom:1rem;line-height:1.2;}
+.cta-inner h2 em{font-style:italic;color:var(--gold2);}
+.cta-inner p{font-size:.86rem;color:rgba(255,255,255,.5);margin-bottom:2.5rem;line-height:1.85;}
+.cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+
+/* TRACKS PAGE */
+.page-header{background:var(--navy);padding:5rem 6% 4rem;}
+.page-header-inner{max-width:1280px;margin:auto;}
+.page-header h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.5rem,5vw,4rem);font-weight:300;color:#fff;margin-bottom:.8rem;}
+.page-header h1 em{font-style:italic;color:var(--gold2);}
+.page-header p{font-size:.9rem;color:rgba(255,255,255,.5);max-width:500px;line-height:1.85;}
+.tracks-filter{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:2rem;}
+.filter-btn{padding:.4rem 1rem;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.5);transition:.3s;border-radius:2px;}
+.filter-btn.active{background:var(--gold);color:#fff;border-color:var(--gold);}
+.filter-btn:hover:not(.active){border-color:rgba(255,255,255,.4);color:#fff;}
+.tracks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem;}
+.track-card{background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:.3s;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+.track-card:hover{box-shadow:var(--shadow2);transform:translateY(-3px);}
+.track-cover-ph{width:100%;display:flex;align-items:center;justify-content:center;}
+.track-cover-num{font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:300;color:rgba(255,255,255,.12);}
+.track-status{position:absolute;top:12px;right:12px;padding:.22rem .65rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;}
+.track-status.locked{background:rgba(15,30,60,.65);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);}
+.track-status.unlocked{background:var(--gold);color:#fff;}
+.track-body{padding:1.5rem;}
+.track-tag{font-size:.63rem;letter-spacing:.17em;text-transform:uppercase;color:var(--gold);margin-bottom:.45rem;}
+.track-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--navy);margin-bottom:.45rem;line-height:1.3;}
+.track-desc{font-size:.78rem;color:var(--muted);line-height:1.75;margin-bottom:1.2rem;}
+.track-footer{display:flex;align-items:center;justify-content:space-between;padding-top:.9rem;border-top:1px solid var(--border);}
+.track-price{font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--navy);}
+.track-cta{font-size:.67rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);cursor:pointer;background:none;border:none;font-weight:500;transition:.2s;}
+.track-cta:hover{color:var(--navy);}
+.track-cta.open{color:#16a34a;}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:0;max-width:960px;margin:0 auto;border:1px solid var(--border);box-shadow:var(--shadow2);}
+.price-card{background:var(--surface);padding:3rem 2.5rem;position:relative;border-right:1px solid var(--border);}
+.price-card:last-child{border-right:none;}
+.price-card.featured{background:var(--navy);}
+.price-featured-tag{position:absolute;top:0;left:50%;transform:translateX(-50%);background:var(--gold);color:#fff;font-size:.58rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;padding:.28rem 1rem;}
+.price-tier{font-size:.67rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1.2rem;}
+.price-card.featured .price-tier{color:rgba(255,255,255,.4);}
+.price-num{font-family:'Cormorant Garamond',serif;font-size:3.4rem;font-weight:300;line-height:1;color:var(--navy);}
+.price-card.featured .price-num{color:#fff;}
+.price-num sup{font-size:1.3rem;vertical-align:top;margin-top:.5rem;color:var(--gold);}
+.price-period{font-size:.74rem;color:var(--muted);margin:.5rem 0 1.8rem;}
+.price-card.featured .price-period{color:rgba(255,255,255,.4);}
+.price-divider{height:1px;background:var(--border);margin:1.2rem 0;}
+.price-card.featured .price-divider{background:rgba(255,255,255,.1);}
+.price-features{list-style:none;margin-bottom:2.5rem;}
+.price-features li{font-size:.79rem;color:var(--muted);padding:.48rem 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.7rem;}
+.price-card.featured .price-features li{color:rgba(255,255,255,.58);border-bottom-color:rgba(255,255,255,.07);}
+.price-features li::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+.price-btn{width:100%;padding:.9rem;border-radius:3px;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:.3s;font-weight:500;}
+.price-btn.navy{background:var(--navy);color:#fff;border:none;}
+.price-btn.navy:hover{background:var(--navy2);}
+.price-btn.gold{background:var(--gold);color:#fff;border:none;}
+.price-btn.gold:hover{background:var(--gold2);}
+.price-btn.outline{background:transparent;color:var(--navy);border:1px solid var(--border2);}
+.price-btn.outline:hover{border-color:var(--navy);}
+
+/* FAQ */
+.faq-section{padding:5rem 6%;background:var(--bg);}
+.faq-inner{max-width:720px;margin:auto;}
+.faq-item{border-bottom:1px solid var(--border);padding:1.5rem 0;cursor:pointer;}
+.faq-q{display:flex;align-items:center;justify-content:space-between;font-size:.88rem;font-weight:500;color:var(--navy);}
+.faq-icon{font-size:1.1rem;color:var(--muted);transition:.3s;}
+.faq-a{font-size:.82rem;color:var(--muted);line-height:1.82;margin-top:1rem;display:none;}
+.faq-a.open{display:block;}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,30,60,.55);z-index:200;display:none;align-items:center;justify-content:center;padding:1.5rem;backdrop-filter:blur(6px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);max-width:520px;width:100%;padding:2.5rem;position:relative;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow2);}
+.modal-close{position:absolute;top:1.2rem;right:1.2rem;background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;transition:.2s;}
+.modal-close:hover{color:var(--navy);}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:400;margin-bottom:.3rem;color:var(--navy);}
+.modal-tag{font-size:.63rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:1.3rem;}
+.modal-price{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--navy);margin-bottom:1.3rem;}
+.modal-features{list-style:none;margin-bottom:1.5rem;}
+.modal-features li{font-size:.82rem;color:var(--muted);padding:.48rem 0;border-bottom:1px solid var(--border);display:flex;gap:.7rem;align-items:flex-start;}
+.modal-features li::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:.5rem;}
+.modal-btn{width:100%;padding:1rem;background:var(--navy);color:#fff;font-weight:500;font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;border:none;cursor:pointer;margin-top:1rem;transition:.3s;}
+.modal-btn:hover{background:var(--navy2);}
+.modal-btn:disabled{opacity:.5;cursor:not-allowed;}
+.modal-btn.gold{background:var(--gold);}.modal-btn.gold:hover{background:var(--gold2);}
+.modal-note{font-size:.72rem;color:var(--muted);text-align:center;margin-top:.7rem;}
+.modal-link{color:var(--gold);cursor:pointer;}
+.form-group{margin-bottom:1rem;}
+.form-group label{display:block;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.45rem;}
+.form-group input{width:100%;background:var(--bg);border:1px solid var(--border2);padding:.8rem 1rem;color:var(--text);font-size:.88rem;outline:none;transition:.2s;font-family:'Inter',sans-serif;border-radius:2px;}
+.form-group input:focus{border-color:var(--gold);}
+.err-msg{color:#dc2626;font-size:.77rem;margin-top:.4rem;}
+.tab-row{display:flex;margin-bottom:2rem;border-bottom:1px solid var(--border);}
+.tab-btn{flex:1;padding:.7rem;font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:.2s;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--gold);}
+.google-btn{width:100%;padding:.85rem;background:var(--bg);color:var(--text);font-size:.77rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.7rem;transition:.3s;margin-bottom:1rem;border-radius:2px;}
+.google-btn:hover{border-color:var(--navy);}
+.auth-divider{display:flex;align-items:center;gap:1rem;margin:.7rem 0;color:var(--muted2);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.checkout-summary{background:var(--surface2);border:1px solid var(--border);padding:1.4rem;margin:1rem 0 1.4rem;}
+.cs-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--navy);}
+.cs-desc{font-size:.74rem;color:var(--muted);margin-top:.25rem;}
+.cs-price{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--navy);margin-top:.6rem;}
+.stripe-box{background:var(--goldbg);border:1px solid rgba(184,149,90,.2);padding:1.1rem;margin:1rem 0;text-align:center;}
+.stripe-box p{font-size:.79rem;color:var(--muted);line-height:1.7;}
+.price-warn{background:#fef3c7;border:1px solid #fcd34d;padding:.8rem 1rem;font-size:.78rem;color:#92400e;margin:.8rem 0;}
+.spinner{display:inline-block;width:14px;height:14px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:.4rem;}
+.spinner.dark{border-color:rgba(15,30,60,.2);border-top-color:var(--navy);}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem;}
+.dash-card{background:var(--surface);border:1px solid var(--border);overflow:hidden;transition:.3s;box-shadow:var(--shadow);}
+.dash-card:hover{box-shadow:var(--shadow2);}
+.dash-cover-ph{width:100%;height:150px;display:flex;align-items:center;justify-content:center;}
+.dash-cover-num{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;color:rgba(255,255,255,.12);}
+.dash-body{padding:1.3rem;}
+.dash-tag{font-size:.63rem;letter-spacing:.17em;text-transform:uppercase;color:#16a34a;margin-bottom:.4rem;}
+.dash-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--navy);margin-bottom:.7rem;}
+.dash-file{font-size:.74rem;color:var(--muted);padding:.3rem 0;border-top:1px solid var(--border);}
+.empty-state{text-align:center;padding:5rem 2rem;color:var(--muted);}
+.empty-icon{font-family:'Cormorant Garamond',serif;font-size:4rem;color:var(--border2);margin-bottom:1rem;}
+.notice{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;padding:.8rem 1.2rem;font-size:.79rem;margin-bottom:1.5rem;}
+.success-notice{background:#fef9ee;border:1px solid rgba(184,149,90,.3);color:var(--gold);padding:1rem 1.5rem;font-size:.84rem;margin-bottom:2rem;}
+.loading-state{text-align:center;padding:4rem;color:var(--muted);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;}
+
+/* ADMIN */
+.admin-login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--navy);}
+.admin-box{background:var(--surface);border:1px solid var(--border);padding:3rem;max-width:420px;width:100%;box-shadow:var(--shadow2);}
+.admin-box h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:400;margin-bottom:.5rem;color:var(--navy);}
+.admin-panel{max-width:1200px;margin:0 auto;padding:2rem 5%;}
+.admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+.admin-header h1{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:400;color:var(--navy);}
+.admin-tabs{display:flex;margin-bottom:2rem;border-bottom:1px solid var(--border);}
+.admin-tab{padding:.7rem 1.5rem;font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:.2s;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.admin-tab.active{color:var(--navy);border-bottom-color:var(--gold);}
+.admin-section{display:none;}.admin-section.active{display:block;}
+.admin-card{background:var(--surface);border:1px solid var(--border);padding:1.4rem;margin-bottom:2px;transition:.2s;}
+.admin-card:hover{background:var(--surface2);}
+.btn-sm{padding:.32rem .85rem;font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;transition:.2s;border-radius:2px;}
+.btn-del{background:#fee2e2;color:#dc2626;border:1px solid #fecaca;}
+.btn-del:hover{background:#fecaca;}
+.btn-edit{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}
+.btn-edit:hover{background:#dbeafe;}
+.add-form{background:var(--surface);border:1px solid var(--border);padding:2.5rem;margin-bottom:1rem;}
+.add-form h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;margin-bottom:2rem;color:var(--navy);}
+.add-form label{display:block;font-size:.67rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem;margin-top:1rem;}
+.add-form input,.add-form textarea{width:100%;background:var(--bg);border:1px solid var(--border2);padding:.75rem 1rem;color:var(--text);font-size:.88rem;outline:none;transition:.2s;font-family:'Inter',sans-serif;border-radius:2px;}
+.add-form textarea{resize:vertical;min-height:90px;}
+.add-form input:focus,.add-form textarea:focus{border-color:var(--gold);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.upload-area{border:1px dashed var(--border2);padding:1.8rem;text-align:center;cursor:pointer;color:var(--muted);font-size:.78rem;margin-top:.5rem;transition:.2s;}
+.upload-area:hover{border-color:var(--gold);color:var(--navy);}
+.cover-upload{border:1px dashed var(--border2);padding:1.4rem;text-align:center;cursor:pointer;color:var(--muted);font-size:.76rem;margin-top:.5rem;transition:.2s;}
+.cover-upload:hover{border-color:var(--gold);}
+.cover-preview{width:100%;height:130px;object-fit:cover;display:none;margin-top:.7rem;border:1px solid var(--border);}
+.file-item{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);padding:.45rem .8rem;margin-top:.3rem;font-size:.76rem;}
+.file-remove{background:none;border:none;color:#dc2626;cursor:pointer;}
+.ok-msg{background:#fef9ee;border:1px solid rgba(184,149,90,.3);color:var(--gold);padding:.7rem 1rem;font-size:.78rem;margin-top:1rem;display:none;}
+
+footer{background:var(--navy);padding:4rem 6%;text-align:center;}
+.footer-logo{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:400;color:#fff;letter-spacing:.06em;margin-bottom:.6rem;}
+.footer-logo span{color:var(--gold2);}
+footer p{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.3);}
+
+.fade-in{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease;}
+.fade-in.visible{opacity:1;transform:none;}
+.fd1{transition-delay:.12s;}.fd2{transition-delay:.24s;}.fd3{transition-delay:.36s;}
+
+#previewBar{background:var(--gold);padding:.55rem 2rem;align-items:center;justify-content:space-between;}
+
+@media(max-width:600px){.form-row{grid-template-columns:1fr;}.nav-links{display:none;}.hero-btns,.cta-btns{flex-direction:column;align-items:center;}}
+</style>
+</head>
+<body>
+
+<nav id="mainNav" style="display:none;">
+  <div class="nav-inner">
+    <div class="logo" onclick="showPage('home')">MOGUL<span> AI</span></div>
+    <div class="nav-links">
+      <span onclick="showPage('home')">Home</span>
+      <span onclick="showPage('tracks')">Tracks</span>
+      <span onclick="showPage('pricing')">Pricing</span>
+      <span id="navDash" style="display:none;" onclick="showPage('dashboard')">My Library</span>
+    </div>
+    <div class="nav-right">
+      <span class="nav-user" id="navUserLabel"></span>
+      <button class="nav-btn" id="navAuthBtn" onclick="openAuth()">Sign In</button>
+      <button class="nav-btn ghost" id="navSignOutBtn" style="display:none;" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="page-home" class="page">
+  <div class="hero">
+    <canvas id="heroCanvas"></canvas>
+    <div class="hero-content">
+      <div class="hero-eyebrow fade-in"><span>AI-Powered Entrepreneurship Tracks</span></div>
+      <h1 class="fade-in fd1">The Blueprint for<br/><em>AI-Driven Success</em></h1>
+      <p class="fade-in fd2">Premium learning tracks engineered for ambitious founders who use artificial intelligence as their ultimate competitive edge.</p>
+      <div class="hero-btns fade-in fd3">
+        <button class="btn-gold" onclick="showPage('tracks')">Explore Tracks</button>
+        <button class="btn-white" onclick="showPage('pricing')">View Pricing</button>
+      </div>
+    </div>
+    <div class="hero-scroll"><span>Scroll</span><div class="scroll-line"></div></div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stats-inner">
+      <div class="stat fade-in"><div class="stat-num" id="statCount">10</div><div class="stat-label">Expert Tracks</div></div>
+      <div class="stat fade-in fd1"><div class="stat-num">$19</div><div class="stat-label">Per Track</div></div>
+      <div class="stat fade-in fd2"><div class="stat-num">$29</div><div class="stat-label">Monthly All-Access</div></div>
+      <div class="stat fade-in fd3"><div class="stat-num">$9</div><div class="stat-label">Per Month Yearly</div></div>
+    </div>
+  </div>
+
+  <section style="background:var(--surface);padding-bottom:4rem;">
+    <div class="section-inner">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:2.5rem;">
+        <div>
+          <div class="section-eyebrow fade-in"><div class="section-line"></div><span>Featured Tracks</span></div>
+          <h2 class="section-title fade-in" style="margin-bottom:0;">Curated for <em>Ambitious Founders</em></h2>
+        </div>
+        <button class="btn-gold" style="padding:.7rem 1.8rem;font-size:.7rem;flex-shrink:0;" onclick="showPage('tracks')">View All &rarr;</button>
+      </div>
+      <div class="carousel-outer"><div class="carousel-track" id="carouselTrack"></div></div>
+      <div class="carousel-controls">
+        <div class="carousel-dots" id="carouselDots"></div>
+        <div class="carousel-arrows">
+          <button class="c-arrow" id="cPrev" onclick="carouselPrev()">&#8592;</button>
+          <button class="c-arrow" id="cNext" onclick="carouselNext()">&#8594;</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rec-section">
+    <div class="section-inner">
+      <div class="section-eyebrow fade-in"><div class="section-line"></div><span style="color:var(--gold2);">Recommended</span></div>
+      <h2 class="section-title fade-in" style="color:#fff;">Start Here. <em>See Results Fast.</em></h2>
+      <p class="fade-in fd1" style="color:rgba(255,255,255,.42);font-size:.85rem;max-width:460px;line-height:1.85;">Our highest-impact tracks for founders who want to move from zero to revenue using AI tools and systems.</p>
+      <div class="rec-grid" id="recGrid"></div>
+    </div>
+  </div>
+
+  <div class="founder-section">
+    <div class="founder-inner">
+      <div class="founder-quote-mark">&ldquo;</div>
+      <blockquote class="founder-quote fade-in">The intersection of artificial intelligence and entrepreneurship is the single greatest wealth-creation opportunity of our generation. Mogul AI exists to make sure ambitious founders have the frameworks, tools, and strategy to capture it.</blockquote>
+      <div class="founder-attr fade-in fd1">
+        <div class="founder-line"></div>
+        <div>
+          <div class="founder-name">Anonymous</div>
+          <div class="founder-role">Co-Founder &amp; Strategic Advisor &mdash; Mogul AI</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-banner">
+    <div class="cta-inner">
+      <h2 class="fade-in">Ready to Build Your <em>AI-Powered Business?</em></h2>
+      <p class="fade-in fd1">Join founders using AI to outpace the competition. Start with a single track or unlock everything today.</p>
+      <div class="cta-btns fade-in fd2">
+        <button class="btn-gold" onclick="showPage('pricing')">Get Started &mdash; From $9.99/mo</button>
+        <button class="btn-white" onclick="showPage('tracks')">Browse All Tracks</button>
+      </div>
+    </div>
+  </div>
+  <footer><div class="footer-logo">MOGUL<span> AI</span></div><p>&copy; 2025 Mogul AI &mdash; All Rights Reserved</p></footer>
+</div>
+
+<!-- TRACKS -->
+<div id="page-tracks" class="page">
+  <div class="page-header">
+    <div class="page-header-inner">
+      <div class="section-eyebrow"><div class="section-line"></div><span style="color:var(--gold2);">All Tracks</span></div>
+      <h1>The Complete <em>AI Curriculum</em></h1>
+      <p>Every track includes proven frameworks and practical resources from practitioners building real AI businesses.</p>
+      <div class="tracks-filter" id="tracksFilter"></div>
+    </div>
+  </div>
+  <section style="padding-top:3rem;">
+    <div class="section-inner">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
+        <p style="font-size:.78rem;color:var(--muted);" id="tracksCount"></p>
+        <button class="btn-gold" style="padding:.65rem 1.6rem;font-size:.7rem;" onclick="requireAuthThen(function(){openCheckout({type:'monthly'});})">Unlock All Tracks &rarr;</button>
+      </div>
+      <div class="tracks-grid" id="allTracks"><div class="loading-state">Loading tracks...</div></div>
+    </div>
+  </section>
+  <div class="cta-banner" style="padding:4rem 6%;">
+    <div class="cta-inner">
+      <h2 class="fade-in" style="font-size:clamp(1.6rem,3vw,2.4rem);">Get <em>All Tracks</em> for One Low Price</h2>
+      <p class="fade-in fd1">Subscribe and unlock the entire library instantly. Cancel anytime.</p>
+      <div class="cta-btns fade-in fd2"><button class="btn-gold" onclick="showPage('pricing')">See Pricing Plans</button></div>
+    </div>
+  </div>
+  <footer><div class="footer-logo">MOGUL<span> AI</span></div><p>&copy; 2025 Mogul AI &mdash; All Rights Reserved</p></footer>
+</div>
+
+<!-- PRICING -->
+<div id="page-pricing" class="page">
+  <div class="page-header" style="text-align:center;">
+    <div class="page-header-inner" style="max-width:1280px;margin:auto;">
+      <div class="section-eyebrow" style="justify-content:center;"><div class="section-line"></div><span style="color:var(--gold2);">Investment</span><div class="section-line"></div></div>
+      <h1 style="max-width:none;">Simple, <em>Transparent</em> Pricing</h1>
+      <p style="margin:0 auto;max-width:460px;">Choose the plan that fits where you are today. Every plan includes instant access.</p>
+    </div>
+  </div>
+  <section style="padding-top:4rem;padding-bottom:3rem;">
+    <div class="section-inner">
+      <div id="fullPricing"></div>
+      <p style="color:var(--muted2);font-size:.7rem;margin-top:1.8rem;letter-spacing:.1em;text-transform:uppercase;text-align:center;">Cancel anytime &nbsp;&middot;&nbsp; Instant access &nbsp;&middot;&nbsp; Secure checkout via Stripe</p>
+    </div>
+  </section>
+  <div class="faq-section">
+    <div class="faq-inner">
+      <div class="section-eyebrow fade-in" style="justify-content:center;"><div class="section-line"></div><span>FAQ</span><div class="section-line"></div></div>
+      <h2 class="section-title fade-in" style="text-align:center;max-width:400px;margin:0 auto 2.5rem;">Common <em>Questions</em></h2>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Can I cancel my subscription at any time?<span class="faq-icon">+</span></div><div class="faq-a">Yes, absolutely. You can cancel your monthly or yearly subscription at any time. You will retain access until the end of your current billing period.</div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Do I get lifetime access if I buy a single track?<span class="faq-icon">+</span></div><div class="faq-a">Yes. When you purchase an individual track, you get lifetime access including all future updates to that track at no additional charge.</div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">What is the difference between monthly and yearly?<span class="faq-icon">+</span></div><div class="faq-a">Both plans give you access to all tracks. The yearly plan is billed once per year and works out significantly cheaper per month compared to billing monthly.</div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">What is included in each track?<span class="faq-icon">+</span></div><div class="faq-a">Each track includes curated course materials, practical frameworks, and resources you can reference anytime from your personal library. The exact content varies by track.</div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Is there a refund policy?<span class="faq-icon">+</span></div><div class="faq-a">We offer a 7-day money-back guarantee on all purchases. If you are not satisfied, contact us within 7 days for a full refund, no questions asked.</div></div>
+    </div>
+  </div>
+  <footer><div class="footer-logo">MOGUL<span> AI</span></div><p>&copy; 2025 Mogul AI &mdash; All Rights Reserved</p></footer>
+</div>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page">
+  <section>
+    <div class="section-inner">
+      <div class="section-eyebrow fade-in"><div class="section-line"></div><span>Members Area</span></div>
+      <h2 class="section-title fade-in">Your <em>Library</em></h2>
+      <p class="section-sub fade-in" style="margin-bottom:2rem;">Your enrolled tracks, ready when you are.</p>
+      <div id="dashContent"></div>
+    </div>
+  </section>
+  <footer><div class="footer-logo">MOGUL<span> AI</span></div><p>&copy; 2025 Mogul AI &mdash; All Rights Reserved</p></footer>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="page-admin-login" class="page" style="padding:0;">
+  <div class="admin-login">
+    <div class="admin-box">
+      <h2>Admin Access</h2>
+      <p style="color:var(--muted);font-size:.82rem;margin-bottom:2rem;">Enter your admin password.</p>
+      <div class="form-group"><label>Password</label><input type="password" id="adminPwInput" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')adminLogin()"/></div>
+      <button class="btn-gold" style="width:100%;padding:.9rem;margin-top:.5rem;" onclick="adminLogin()">Access Dashboard</button>
+      <p id="adminErr" style="color:#dc2626;font-size:.77rem;margin-top:.8rem;display:none;">Incorrect password.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="page-admin" class="page">
+  <div class="admin-panel">
+    <div class="admin-header">
+      <h1>Mogul AI &mdash; Admin</h1>
+      <button class="btn-sm btn-del" onclick="adminLogout()">Log Out</button>
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="adminTab(event,'tracks')">Tracks</button>
+      <button class="admin-tab" onclick="adminTab(event,'add')">Add / Edit</button>
+      <button class="admin-tab" onclick="adminTab(event,'stripe')">Stripe IDs</button>
+      <button class="admin-tab" onclick="adminTab(event,'pricing')">Pricing</button>
+    </div>
+    <div id="adminTracks" class="admin-section active">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+        <p style="font-size:.8rem;color:var(--muted);">Click any track to expand. Changes go live immediately for all users.</p>
+        <button class="btn-gold" style="padding:.7rem 1.8rem;font-size:.72rem;" onclick="enterPreviewMode()">Preview as User &rarr;</button>
+      </div>
+      <div id="adminTrackList"><div class="loading-state">Loading...</div></div>
+    </div>
+    <div id="adminAdd" class="admin-section">
+      <div class="add-form">
+        <h3 id="addFormTitle">Add New Track</h3>
+        <input type="hidden" id="editingTrackId" value=""/>
+        <div class="form-row">
+          <div><label>Track Title *</label><input type="text" id="newTitle" placeholder="e.g. AI for Marketing"/></div>
+          <div><label>Category Tag</label><input type="text" id="newTag" placeholder="e.g. Marketing"/></div>
+        </div>
+        <label>Description *</label>
+        <textarea id="newDesc" placeholder="What students will learn..."></textarea>
+        <div class="form-row">
+          <div><label>Display Number</label><input type="text" id="newEmoji" placeholder="e.g. 01" maxlength="4"/></div>
+          <div><label>Card Accent Color</label><input type="color" id="newColor" value="#0f1e3c" style="height:42px;cursor:pointer;width:100%;border:1px solid var(--border2);background:var(--bg);border-radius:2px;"/></div>
+        </div>
+        <label>Cover Image</label>
+        <div class="cover-upload" onclick="document.getElementById('coverInput').click()">
+          <span id="coverUploadText">Click to upload cover image (JPG, PNG, WebP)</span>
+          <img id="coverPreview" class="cover-preview" alt=""/>
+        </div>
+        <input type="file" id="coverInput" accept="image/*" style="display:none" onchange="handleCoverImage(event)"/>
+        <label>Stripe Price ID</label>
+        <input type="text" id="newStripeId" placeholder="price_xxx..." style="font-family:monospace;font-size:.82rem;"/>
+        <label>Attach Files (PDF / Video)</label>
+        <div class="upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
+          <span id="fileUploadText">Click to upload files to Supabase Storage (PDF, MP4, MOV)</span>
+        </div>
+        <input type="file" id="fileInput" multiple accept=".pdf,.mp4,.mov,.avi" style="display:none" onchange="handleFiles(event)"/>
+        <div id="fileList"></div>
+        <div id="fileUploadProgress" style="display:none;margin-top:.5rem;">
+          <div style="background:var(--border);border-radius:2px;height:4px;overflow:hidden;">
+            <div id="fileProgressBar" style="background:var(--gold);height:100%;width:0%;transition:width .3s;"></div>
+          </div>
+          <p id="fileProgressText" style="font-size:.72rem;color:var(--muted);margin-top:.4rem;"></p>
+        </div>
+        <div style="display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap;">
+          <button class="btn-gold" style="padding:.9rem 2.5rem;" onclick="saveTrack()">Save Track</button>
+          <button id="cancelEditBtn" style="padding:.9rem 2rem;display:none;background:transparent;border:1px solid var(--border2);color:var(--muted);cursor:pointer;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;" onclick="cancelEdit()">Cancel</button>
+        </div>
+        <div class="ok-msg" id="saveStatus"></div>
+      </div>
+    </div>
+    <div id="adminStripe" class="admin-section">
+      <div class="add-form">
+        <h3>Stripe Configuration</h3>
+        <label>Monthly Subscription Price ID</label><input type="text" id="stripeMonthlyId" placeholder="price_xxx..." style="font-family:monospace;font-size:.82rem;"/>
+        <label>Yearly Subscription Price ID</label><input type="text" id="stripeYearlyId" placeholder="price_xxx..." style="font-family:monospace;font-size:.82rem;"/>
+        <label>Success URL</label><input type="text" id="successUrl" value="https://mogulai.netlify.app/?success=true"/>
+        <label>Cancel URL</label><input type="text" id="cancelUrl" value="https://mogulai.netlify.app/?cancelled=true"/>
+        <button class="btn-gold" style="padding:.9rem 2rem;margin-top:1.5rem;" onclick="saveStripeIds()">Save</button>
+        <div class="ok-msg" id="stripeIdSuccess">Saved.</div>
+      </div>
+    </div>
+    <div id="adminPricing" class="admin-section">
+      <div class="add-form">
+        <h3>Pricing Configuration</h3>
+        <div class="form-row">
+          <div><label>Per-Track ($)</label><input type="number" id="priceSingle" value="19.99" step="0.01"/></div>
+          <div><label>Monthly Sub ($)</label><input type="number" id="priceMonthly" value="29.99" step="0.01"/></div>
+        </div>
+        <label>Yearly per-month ($)</label>
+        <input type="number" id="priceYearly" value="9.99" step="0.01" style="max-width:200px;"/>
+        <button class="btn-gold" style="padding:.9rem 2rem;margin-top:1.5rem;" onclick="savePricing()">Save</button>
+        <div class="ok-msg" id="priceSuccess">Saved.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW BAR -->
+<div id="previewBar" style="display:none;position:fixed;top:0;left:0;width:100%;z-index:999;background:var(--gold);padding:.55rem 2rem;align-items:center;justify-content:space-between;">
+  <span style="font-size:.73rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#fff;">Admin Preview &mdash; Viewing as paying user</span>
+  <button onclick="exitPreviewMode()" style="background:rgba(0,0,0,.2);color:#fff;border:none;padding:.35rem 1.1rem;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-weight:600;border-radius:2px;">Exit Preview</button>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="authModal"><div class="modal"><button class="modal-close" onclick="closeModal('authModal')">&#10005;</button><div class="tab-row"><button class="tab-btn active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</button><button class="tab-btn" id="tabSignUp" onclick="switchAuthTab('signup')">Create Account</button></div><div id="authContent"></div></div></div>
+<div class="modal-overlay" id="trackModal"><div class="modal"><button class="modal-close" onclick="closeModal('trackModal')">&#10005;</button><div id="trackModalContent"></div></div></div>
+<div class="modal-overlay" id="checkoutModal"><div class="modal"><button class="modal-close" onclick="closeModal('checkoutModal')">&#10005;</button><div id="checkoutContent"></div></div></div>
+
+<script>
+var SB_URL='https://mgvrocalrdbvvxatyjfq.supabase.co';
+var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ndnJvY2FscmRidnZ4YXR5amZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2Mjk0NjIsImV4cCI6MjA5NTIwNTQ2Mn0.1lWZ5ZlNdFYjTzMNZ61p4G-6ftTieGYkLezZ2WRM6KY';
+var SB_SVC='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ndnJvY2FscmRidnZ4YXR5amZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTYyOTQ2MiwiZXhwIjoyMDk1MjA1NDYyfQ.OdHnCmoNTdqfAqBTYF0dGQFW2NtGsIhIURuL8kX-sso';
+var STRIPE_PK='pk_test_51Tabz2IgvXJG6ezDtPuDl8XfYt7X2wN4vrtjjGAJQINAwjibac4lYow0teeslCmHAXcP4xJKjZxqrb1po22WJh7n00dGk8QnTL';
+var ADMIN_PW='ventureai2025';
+
+var sb=null,stripeInst=null;
+var tracks=[],currentUser=null,userPurchases=[],userSub=null;
+var pendingFiles=[],pendingAction=null,pendingCover=null;
+var isPreviewMode=false,activeFilter='All';
+var pricing={single:19.99,monthly:29.99,yearly:9.99};
+var stripeIds={monthly:'',yearly:'',successUrl:'https://mogulai.netlify.app/?success=true',cancelUrl:'https://mogulai.netlify.app/?cancelled=true'};
+var cPos=0,cTimer=null;
+
+var DEFAULT_TRACKS=[
+  {title:'Building an AI Business from Scratch',tag:'Entrepreneurship',description:'Go from idea to launched AI business. Learn business models, validation, and execution with AI as your co-founder.',emoji:'01',color:'#0f1e3c',files:[],stripe_id:'',cover_image:''},
+  {title:'AI for Marketing and Growth',tag:'Marketing',description:'Master AI-driven marketing strategies, content creation, ad optimization, and growth hacking techniques.',emoji:'02',color:'#0f2a18',files:[],stripe_id:'',cover_image:''},
+  {title:'AI Tools for Productivity',tag:'Productivity',description:'Automate your workflow, 10x your output, and reclaim hours every week using the best AI productivity tools.',emoji:'03',color:'#2a1a08',files:[],stripe_id:'',cover_image:''},
+  {title:'Raising Funding in the AI Era',tag:'Fundraising',description:'Pitch to investors, build your deck, and understand what VCs look for in AI-powered startups.',emoji:'04',color:'#1e0f3c',files:[],stripe_id:'',cover_image:''},
+  {title:'Building and Selling AI Products',tag:'Product',description:'Design, develop, and sell AI-powered products. No-code tools, pricing, and go-to-market strategy.',emoji:'05',color:'#3c0f1e',files:[],stripe_id:'',cover_image:''},
+  {title:'AI for Content Creation',tag:'Content',description:'Create blogs, videos, scripts, and social content at scale. Build an audience without burning out.',emoji:'06',color:'#0f243c',files:[],stripe_id:'',cover_image:''},
+  {title:'Automating Your Business with AI',tag:'Automation',description:'Build automated pipelines for sales, customer service, and operations that run while you sleep.',emoji:'07',color:'#0f3c1e',files:[],stripe_id:'',cover_image:''},
+  {title:'AI for Sales and Lead Generation',tag:'Sales',description:'Use AI to prospect, qualify leads, personalize outreach, and close deals faster than the competition.',emoji:'08',color:'#3c2a0f',files:[],stripe_id:'',cover_image:''},
+  {title:'The AI Founders Mindset',tag:'Mindset',description:'Develop the mental models, habits, and frameworks of the most successful AI entrepreneurs.',emoji:'09',color:'#1e1a3c',files:[],stripe_id:'',cover_image:''},
+  {title:'Scaling a Business with AI',tag:'Scaling',description:'Take your business from 6 to 7 figures using AI-powered systems, hiring strategies, and operations.',emoji:'10',color:'#0f1e3c',files:[],stripe_id:'',cover_image:''}
+];
+
+// ── HERO ANIMATION ────────────────────────────────────────
+function initHeroCanvas(){
+  var canvas=document.getElementById('heroCanvas');if(!canvas)return;
+  var ctx=canvas.getContext('2d'),W,H,t=0,mx=null,my=null;
+  var orbs=[],waves=[],motes=[];
+
+  function resize(){W=canvas.width=canvas.offsetWidth;H=canvas.height=canvas.offsetHeight;}
+
+  function mkOrb(){return{x:Math.random()*W,y:Math.random()*H,r:W*(0.18+Math.random()*.15),vx:(Math.random()-.5)*.1,vy:(Math.random()-.5)*.07,phase:Math.random()*Math.PI*2,spd:0.0006+Math.random()*.0005,type:Math.random()>.5?'gold':'blue'};}
+  function mkWave(i){return{y:H*(0.2+i*0.2),amp:H*(0.055+Math.random()*.04),freq:0.0007+Math.random()*.0004,phase:Math.random()*Math.PI*2,spd:0.00025+Math.random()*.00015,col:i%2===0?'184,149,90':'140,165,210',al:0.035+i*.012};}
+  function mkMote(){return{x:Math.random()*W,y:H+Math.random()*H*.3,r:Math.random()*.7+.2,vy:-(0.07+Math.random()*.1),vx:(Math.random()-.5)*.05,al:Math.random()*.3+.08,life:0,max:700+Math.random()*500};}
+
+  resize();
+  window.addEventListener('resize',resize);
+  var hero=canvas.closest('.hero');
+  if(hero){
+    hero.addEventListener('mousemove',function(e){var r=canvas.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top;});
+    hero.addEventListener('mouseleave',function(){mx=null;my=null;});
+  }
+  for(var i=0;i<4;i++)orbs.push(mkOrb());
+  for(var i=0;i<4;i++)waves.push(mkWave(i));
+  for(var i=0;i<35;i++){var m=mkMote();m.y=Math.random()*H;motes.push(m);}
+
+  function draw(){
+    t+=1.4;ctx.clearRect(0,0,W,H);
+
+    // Velvet aureoles
+    for(var i=0;i<orbs.length;i++){
+      var o=orbs[i];
+      o.x+=o.vx+Math.sin(t*o.spd*2+o.phase)*.7;
+      o.y+=o.vy+Math.cos(t*o.spd*1.4+o.phase)*.5;
+      if(o.x<-o.r*2)o.x=W+o.r;if(o.x>W+o.r*2)o.x=-o.r;
+      if(o.y<-o.r*2)o.y=H+o.r;if(o.y>H+o.r*2)o.y=-o.r;
+      if(mx!==null){var dx=mx-o.x,dy=my-o.y,dd=Math.sqrt(dx*dx+dy*dy);if(dd<W*.5){o.x+=dx*.0006;o.y+=dy*.0006;}}
+      var pulse=0.82+Math.sin(t*.008+o.phase)*.18;
+      var col=o.type==='gold'?'184,149,90':'140,165,210';
+      var g=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r*pulse);
+      g.addColorStop(0,'rgba('+col+',.11)');g.addColorStop(.4,'rgba('+col+',.04)');g.addColorStop(1,'rgba('+col+',0)');
+      ctx.beginPath();ctx.arc(o.x,o.y,o.r*pulse,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    }
+
+    // Aurora waves
+    for(var i=0;i<waves.length;i++){
+      var w=waves[i];w.phase+=w.spd*3;
+      ctx.beginPath();ctx.moveTo(0,H);
+      for(var x=0;x<=W;x+=5){
+        var wy=w.y+Math.sin(x*w.freq+w.phase)*w.amp+Math.sin(x*w.freq*1.7+w.phase*1.4)*w.amp*.35;
+        if(x===0)ctx.moveTo(x,wy);else ctx.lineTo(x,wy);
+      }
+      ctx.lineTo(W,H);ctx.closePath();
+      var al=w.al*(0.7+Math.sin(t*.006+i)*.3);
+      ctx.fillStyle='rgba('+w.col+','+al+')';ctx.fill();
+    }
+
+    // Mouse warmth
+    if(mx!==null){
+      var mr=Math.min(W,H)*.25;
+      var mg=ctx.createRadialGradient(mx,my,0,mx,my,mr);
+      mg.addColorStop(0,'rgba(184,149,90,.07)');mg.addColorStop(1,'rgba(184,149,90,0)');
+      ctx.beginPath();ctx.arc(mx,my,mr,0,Math.PI*2);ctx.fillStyle=mg;ctx.fill();
+    }
+
+    // Rising motes — faster
+    for(var i=motes.length-1;i>=0;i--){
+      var m=motes[i];
+      m.x+=m.vx+Math.sin(t*.015+i)*.15;m.y+=m.vy*2.2;m.life+=2;
+      if(m.life>m.max||m.y<-10){motes.splice(i,1);motes.push(mkMote());continue;}
+      var fa=m.al*Math.sin((m.life/m.max)*Math.PI);
+      ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(210,185,140,'+fa+')';ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ── SCROLL ANIMATIONS ─────────────────────────────────────
+function initScrollAnim(){
+  var els=document.querySelectorAll('.fade-in:not(.visible)');
+  var obs=new IntersectionObserver(function(ents){ents.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});},{threshold:0.1});
+  els.forEach(function(el){obs.observe(el);});
+}
+
+// ── REST ──────────────────────────────────────────────────
+function rest(method,path,body,svc){
+  var key=svc?SB_SVC:SB_ANON;
+  var opts={method:method,headers:{'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key,'Prefer':'return=representation'}};
+  if(body!==undefined)opts.body=JSON.stringify(body);
+  return fetch(SB_URL+'/rest/v1/'+path,opts).then(function(r){if(r.status===204)return[];return r.json();});
+}
+
+// ── TRACKS ────────────────────────────────────────────────
+function loadTracks(cb){
+  rest('GET','tracks?select=*&order=created_at.asc',undefined,false)
+    .then(function(d){
+      if(Array.isArray(d)&&d.length>0){tracks=d;updateCount();if(cb)cb();}
+      else{rest('POST','tracks',DEFAULT_TRACKS,true).then(function(s){tracks=(Array.isArray(s)&&s.length)?s:DEFAULT_TRACKS.slice();updateCount();if(cb)cb();}).catch(function(){tracks=DEFAULT_TRACKS.slice();if(cb)cb();});}
+    }).catch(function(){tracks=DEFAULT_TRACKS.slice();if(cb)cb();});
+}
+function updateCount(){var el=document.getElementById('statCount');if(el)el.textContent=tracks.length;}
+function refreshViews(){
+  var pg=document.querySelector('.page.active');if(!pg)return;
+  var id=pg.id.replace('page-','');
+  if(id==='home'){renderCarousel();renderRec();}
+  if(id==='tracks'){renderAllTracks();renderFilters();}
+  if(id==='dashboard')renderDashboard();
+}
+
+// ── AUTH ──────────────────────────────────────────────────
+function initAuth(){
+  if(typeof supabase==='undefined')return;
+  sb=supabase.createClient(SB_URL,SB_ANON);
+  sb.auth.onAuthStateChange(function(ev,session){
+    currentUser=session?session.user:null;updateNavAuth();
+    if(currentUser)loadPurchases();
+  });
+}
+function updateNavAuth(){
+  var lbl=document.getElementById('navUserLabel'),inB=document.getElementById('navAuthBtn'),outB=document.getElementById('navSignOutBtn'),dash=document.getElementById('navDash');
+  if(currentUser){lbl.textContent=currentUser.email.split('@')[0];inB.style.display='none';outB.style.display='block';dash.style.display='block';}
+  else{lbl.textContent='';inB.style.display='block';outB.style.display='none';dash.style.display='none';}
+}
+function loadPurchases(){
+  if(!sb||!currentUser)return;
+  sb.from('purchases').select('track_id,type').eq('user_id',currentUser.id).then(function(res){
+    var d=res.data||[];
+    userPurchases=d.filter(function(p){return p.type==='track';}).map(function(p){return p.track_id;});
+    var sub=d.find(function(p){return p.type==='monthly'||p.type==='yearly';});
+    userSub=sub?sub.type:null;
+    refreshViews();
+  });
+}
+function hasAccess(id){return userSub||userPurchases.indexOf(id)!==-1;}
+function signOut(){if(sb)sb.auth.signOut();currentUser=null;userPurchases=[];userSub=null;updateNavAuth();showPage('home');}
+function signInWithGoogle(){if(!sb)return;  sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://venture-ai-teal.vercel.app'}});}
+
+// ── PREVIEW ───────────────────────────────────────────────
+function enterPreviewMode(){
+  isPreviewMode=true;userSub='monthly';
+  document.getElementById('previewBar').style.display='flex';
+  document.getElementById('mainNav').style.top='40px';
+  document.querySelectorAll('.page').forEach(function(p){p.style.paddingTop='108px';});
+  document.getElementById('mainNav').style.display='block';
+  showPage('home');
+}
+function exitPreviewMode(){
+  isPreviewMode=false;userSub=null;userPurchases=[];
+  document.getElementById('previewBar').style.display='none';
+  document.getElementById('mainNav').style.top='0';
+  document.querySelectorAll('.page').forEach(function(p){p.style.paddingTop='68px';});
+  document.getElementById('mainNav').style.display='none';
+  showPage('admin');
+  if(currentUser)loadPurchases();
+}
+
+// ── ROUTING ───────────────────────────────────────────────
+function checkSuccess(){
+  if(new URLSearchParams(window.location.search).get('success')==='true'){
+    showPage('dashboard');
+    setTimeout(function(){var d=document.getElementById('dashContent');if(d){var m=document.createElement('div');m.className='success-notice';m.textContent='Payment successful. Your content is now unlocked.';d.parentNode.insertBefore(m,d);}},500);
+    history.replaceState({},'',window.location.pathname);
+  }
+}
+function initRoute(){
+  if(window.location.hash==='#admin'){showPage('admin-login');return;}
+  document.getElementById('mainNav').style.display='block';
+  checkSuccess();showPage('home');
+}
+window.addEventListener('hashchange',function(){if(window.location.hash==='#admin')showPage('admin-login');});
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('page-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  if(!isPreviewMode){document.getElementById('mainNav').style.display=['home','tracks','pricing','dashboard'].indexOf(name)!==-1?'block':'none';}
+  if(name==='home'){renderCarousel();renderRec();renderPricing('homePricing');setTimeout(initScrollAnim,100);}
+  if(name==='tracks'){renderAllTracks();renderFilters();setTimeout(initScrollAnim,100);}
+  if(name==='pricing'){renderPricing('fullPricing');setTimeout(initScrollAnim,100);}
+  if(name==='dashboard')renderDashboard();
+  if(name==='admin')loadTracks(renderAdminTracks);
+}
+
+// ── COVER HELPER ──────────────────────────────────────────
+function coverHTML(t,h){
+  if(t.cover_image&&t.cover_image.length>50)return'<img src="'+t.cover_image+'" style="width:100%;height:'+h+'px;object-fit:cover;display:block;" alt="'+t.title+'"/>';
+  return'<div style="width:100%;height:'+h+'px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,'+t.color+',#243d6e);"><span style="font-family:Cormorant Garamond,serif;font-size:'+(h*.7)+'px;font-weight:300;color:rgba(255,255,255,.12);">'+t.emoji+'</span></div>';
+}
+
+// ── CAROUSEL ──────────────────────────────────────────────
+function renderCarousel(){
+  var el=document.getElementById('carouselTrack'),dotsEl=document.getElementById('carouselDots');
+  if(!el||!tracks.length)return;
+  var featured=tracks.slice(0,Math.min(6,tracks.length));
+  el.innerHTML=featured.map(function(t,i){
+    var cover=(t.cover_image&&t.cover_image.length>50)?'<img src="'+t.cover_image+'" style="width:100%;height:210px;object-fit:cover;display:block;" alt="'+t.title+'"/>':'<div class="c-cover-ph" style="height:210px;background:linear-gradient(135deg,'+t.color+',#243d6e);"><span class="c-cover-num">'+t.emoji+'</span></div>';
+    var badge=i===0?'<div class="c-badge" style="background:var(--gold);">Most Popular</div>':(i===1?'<div class="c-badge" style="background:var(--navy);">Trending</div>':'');
+    return'<div class="c-card" onclick="openTrackModal('+t.id+')">'
+      +'<div style="position:relative;">'+cover+badge+'</div>'
+      +'<div class="c-body"><div class="c-tag">'+t.tag+'</div><div class="c-title">'+t.title+'</div>'
+      +'<div class="c-desc">'+(t.description||'').substring(0,82)+'...</div>'
+      +'<div class="c-footer"><span class="c-price">$'+pricing.single.toFixed(2)+'</span>'
+      +'<button class="c-cta" onclick="event.stopPropagation();requireAuthThen(function(){openCheckout({type:\'track\',id:'+t.id+'});})">Enroll &rarr;</button>'
+      +'</div></div></div>';
+  }).join('');
+  setSizes();
+  dotsEl.innerHTML='';
+  for(var i=0;i<featured.length;i++){
+    var d=document.createElement('div');d.className='c-dot'+(i===0?' active':'');
+    (function(idx){d.onclick=function(){goC(idx);resetTimer();};})(i);
+    dotsEl.appendChild(d);
+  }
+  cPos=0;applyTransform();updateArrows();startTimer();
+}
+
+function getVis(){return window.innerWidth<600?1:window.innerWidth<900?2:3;}
+
+function setSizes(){
+  var outer=document.querySelector('.carousel-outer');if(!outer)return;
+  var w=outer.offsetWidth/getVis();
+  document.querySelectorAll('.c-card').forEach(function(c){c.style.width=w+'px';});
+}
+
+function applyTransform(){
+  var outer=document.querySelector('.carousel-outer');
+  var el=document.getElementById('carouselTrack');
+  if(!outer||!el)return;
+  var w=outer.offsetWidth/getVis();
+  el.style.transform='translateX(-'+(cPos*w)+'px)';
+}
+
+function updateArrows(){
+  var max=Math.max(0,Math.min(6,tracks.length)-getVis());
+  var prev=document.getElementById('cPrev'),next=document.getElementById('cNext');
+  if(prev)prev.disabled=cPos<=0;
+  if(next)next.disabled=cPos>=max;
+  document.querySelectorAll('.c-dot').forEach(function(d,i){d.classList.toggle('active',i===cPos);});
+}
+
+function goC(idx){
+  var max=Math.max(0,Math.min(6,tracks.length)-getVis());
+  cPos=Math.max(0,Math.min(idx,max));
+  applyTransform();updateArrows();
+}
+function carouselNext(){goC(cPos+1);resetTimer();}
+function carouselPrev(){goC(cPos-1);resetTimer();}
+
+function startTimer(){
+  if(cTimer)clearInterval(cTimer);
+  cTimer=setInterval(function(){
+    var max=Math.max(0,Math.min(6,tracks.length)-getVis());
+    goC(cPos>=max?0:cPos+1);
+  },4500);
+}
+function resetTimer(){startTimer();}
+window.addEventListener('resize',function(){setSizes();goC(Math.min(cPos,Math.max(0,Math.min(6,tracks.length)-getVis())));});
+
+// ── RECOMMENDED ───────────────────────────────────────────
+function renderRec(){
+  var el=document.getElementById('recGrid');if(!el||!tracks.length)return;
+  var rec=[tracks[0],tracks[1],tracks[6]||tracks[2],tracks[7]||tracks[3]].filter(Boolean);
+  el.innerHTML=rec.map(function(t){
+    return'<div class="rec-card fade-in" onclick="openTrackModal('+t.id+')">'
+      +'<div class="rec-num">'+t.emoji+'</div><div class="rec-tag">'+t.tag+'</div>'
+      +'<div class="rec-title">'+t.title+'</div>'
+      +'<div class="rec-desc">'+(t.description||'').substring(0,82)+'...</div>'
+      +'<div class="rec-footer"><span class="rec-price">$'+pricing.single.toFixed(2)+'</span>'
+      +'<button class="rec-cta" onclick="event.stopPropagation();requireAuthThen(function(){openCheckout({type:\'track\',id:'+t.id+'});})">Enroll &rarr;</button>'
+      +'</div></div>';
+  }).join('');
+  setTimeout(initScrollAnim,50);
+}
+
+// ── FILTERS ───────────────────────────────────────────────
+function renderFilters(){
+  var el=document.getElementById('tracksFilter');if(!el)return;
+  var tags=['All'];
+  tracks.forEach(function(t){if(tags.indexOf(t.tag)===-1)tags.push(t.tag);});
+  el.innerHTML=tags.map(function(tag){return'<button class="filter-btn'+(activeFilter===tag?' active':'')+'" onclick="setFilter(\''+tag+'\')">'+tag+'</button>';}).join('');
+}
+function setFilter(tag){activeFilter=tag;renderFilters();renderAllTracks();}
+
+// ── RENDER TRACKS ─────────────────────────────────────────
+function renderAllTracks(){
+  var el=document.getElementById('allTracks');if(!el)return;
+  var filtered=activeFilter==='All'?tracks:tracks.filter(function(t){return t.tag===activeFilter;});
+  var cnt=document.getElementById('tracksCount');
+  if(cnt)cnt.textContent=filtered.length+' track'+(filtered.length===1?'':'s')+(activeFilter==='All'?'':' in '+activeFilter);
+  if(!filtered.length){el.innerHTML='<div class="loading-state">No tracks found.</div>';return;}
+  el.innerHTML=filtered.map(function(t){
+    var acc=hasAccess(t.id);
+    var badge=acc?'<div class="track-status unlocked">Enrolled</div>':'<div class="track-status locked">Locked</div>';
+    var btn=acc?'<button class="track-cta open" onclick="event.stopPropagation();showPage(\'dashboard\')">Open &rarr;</button>':'<button class="track-cta" onclick="event.stopPropagation();requireAuthThen(function(){openCheckout({type:\'track\',id:'+t.id+'});})">Enroll &rarr;</button>';
+    var price=acc?'<span style="color:#16a34a;font-size:.8rem;font-weight:500;">Enrolled</span>':'<span class="track-price">$'+pricing.single.toFixed(2)+'</span>';
+    return'<div class="track-card fade-in" onclick="openTrackModal('+t.id+')">'
+      +'<div style="position:relative;">'+coverHTML(t,190)+badge+'</div>'
+      +'<div class="track-body"><div class="track-tag">'+t.tag+'</div><div class="track-title">'+t.title+'</div>'
+      +'<div class="track-desc">'+(t.description||'').substring(0,90)+'...</div>'
+      +'<div class="track-footer">'+price+btn+'</div></div></div>';
+  }).join('');
+  setTimeout(initScrollAnim,50);
+}
+
+// ── PRICING ───────────────────────────────────────────────
+function renderPricing(id){
+  var el=document.getElementById(id);if(!el)return;
+  var yr=(pricing.yearly*12).toFixed(2),sv=Math.round((1-pricing.yearly/pricing.monthly)*100);
+  el.innerHTML='<div class="pricing-grid">'
+    +'<div class="price-card"><div class="price-tier">Per Track</div><div class="price-num"><sup>$</sup>'+pricing.single.toFixed(2)+'</div><div class="price-period">one-time enrollment</div><div class="price-divider"></div>'
+    +'<ul class="price-features"><li>Lifetime access to 1 track</li><li>All included course materials</li><li>Future updates included</li><li>Mobile and desktop access</li></ul>'
+    +'<button class="price-btn outline" onclick="showPage(\'tracks\')">Browse Tracks</button></div>'
+    +'<div class="price-card featured"><div class="price-featured-tag">Most Popular</div><div class="price-tier" style="margin-top:.8rem;">Monthly</div><div class="price-num"><sup>$</sup>'+pricing.monthly.toFixed(2)+'</div><div class="price-period">per month &mdash; cancel anytime</div><div class="price-divider"></div>'
+    +'<ul class="price-features"><li>All '+tracks.length+' tracks unlocked</li><li>New tracks added monthly</li><li>All included course materials</li><li>Cancel anytime</li></ul>'
+    +'<button class="price-btn gold" onclick="requireAuthThen(function(){openCheckout({type:\'monthly\'});})">Get Started Today</button></div>'
+    +'<div class="price-card"><div class="price-tier">Yearly</div><div class="price-num"><sup>$</sup>'+pricing.yearly.toFixed(2)+'</div><div class="price-period">per month &mdash; billed $'+yr+' annually</div><div class="price-divider"></div>'
+    +'<ul class="price-features"><li>All '+tracks.length+' tracks unlocked</li><li>Save '+sv+'% vs monthly</li><li>All included course materials</li><li>Cancel anytime</li></ul>'
+    +'<button class="price-btn navy" onclick="requireAuthThen(function(){openCheckout({type:\'yearly\'});})">Best Value</button></div>'
+    +'</div>';
+}
+
+// ── FAQ ───────────────────────────────────────────────────
+function toggleFaq(el){
+  var a=el.querySelector('.faq-a'),ic=el.querySelector('.faq-icon');
+  var open=a.classList.contains('open');
+  document.querySelectorAll('.faq-a').forEach(function(x){x.classList.remove('open');});
+  document.querySelectorAll('.faq-icon').forEach(function(x){x.textContent='+';});
+  if(!open){a.classList.add('open');if(ic)ic.textContent='-';}
+}
+
+// ── TRACK MODAL ───────────────────────────────────────────
+function openTrackModal(id){
+  var t=tracks.find(function(x){return x.id===id;});if(!t)return;
+  var acc=hasAccess(t.id);
+  var ph=acc?'<span style="color:#16a34a;font-weight:500;">Enrolled</span>':'$'+pricing.single.toFixed(2);
+  var bh=acc
+    ?'<button class="modal-btn" style="background:#16a34a;" onclick="closeModal(\'trackModal\');showPage(\'dashboard\')">Go to My Library</button>'
+    :'<button class="modal-btn gold" onclick="closeModal(\'trackModal\');requireAuthThen(function(){openCheckout({type:\'track\',id:'+t.id+'});})">Enroll Now &mdash; $'+pricing.single.toFixed(2)+'</button>'
+    +'<p class="modal-note">All tracks from $'+pricing.yearly.toFixed(2)+'/mo &mdash; <span class="modal-link" onclick="closeModal(\'trackModal\');showPage(\'pricing\')">See plans</span></p>';
+  document.getElementById('trackModalContent').innerHTML=
+    coverHTML(t,175)
+    +'<div style="padding:1.5rem 0 0;"><div class="modal-tag">'+t.tag+'</div><h2>'+t.title+'</h2>'
+    +'<div class="modal-price">'+ph+'</div>'
+    +'<p style="color:var(--muted);font-size:.82rem;line-height:1.85;margin-bottom:1rem;">'+(t.description||'')+'</p>'
+    +'<ul class="modal-features"><li>Full track access &mdash; all content unlocked</li><li>All included course materials</li><li>Practical frameworks and resources</li><li>Lifetime access after enrollment</li></ul>'
+    +bh+'</div>';
+  document.getElementById('trackModal').classList.add('open');
+}
+
+// ── CHECKOUT ──────────────────────────────────────────────
+function openCheckout(opts){
+  closeModal('trackModal');
+  var t=opts.type==='track'?tracks.find(function(x){return x.id===opts.id;}):null;
+  var title,amount,desc,priceId;
+  if(opts.type==='track'){title=t.title;amount=pricing.single;desc='One-time enrollment &mdash; Lifetime access';priceId=t.stripe_id||'';}
+  else if(opts.type==='monthly'){title='All-Access Monthly';amount=pricing.monthly;desc='Per month &mdash; Cancel anytime';priceId=stripeIds.monthly;}
+  else{title='All-Access Yearly';amount=pricing.yearly*12;desc='$'+pricing.yearly.toFixed(2)+'/mo &mdash; Billed $'+(pricing.yearly*12).toFixed(2)+'/yr';priceId=stripeIds.yearly;}
+  var hasId=priceId&&priceId.indexOf('price_')===0,hasS=!!stripeInst;
+  var html='<h2>Checkout</h2><div class="checkout-summary"><div class="cs-name">'+title+'</div><div class="cs-desc">'+desc+'</div><div class="cs-price">$'+amount.toFixed(2)+'</div></div>';
+  if(hasId&&hasS){html+='<div class="stripe-box"><p>You will be redirected to Stripe Checkout &mdash; all major cards, Apple Pay, and Google Pay accepted.</p></div><button class="modal-btn gold" id="stripeBtn" onclick="doStripe(\''+priceId+'\',\''+opts.type+'\','+(opts.id||'null')+')">Continue to Secure Checkout</button><p class="modal-note">Powered by Stripe &mdash; Cancel anytime for subscriptions</p>';}
+  else{html+='<div class="price-warn">'+(hasS?'No Stripe Price ID configured. Visit Admin &rarr; Stripe IDs.':'Stripe is loading, please try again.')+'</div><button class="modal-btn" onclick="closeModal(\'checkoutModal\')">Close</button>';}
+  document.getElementById('checkoutContent').innerHTML=html;
+  document.getElementById('checkoutModal').classList.add('open');
+}
+function doStripe(pid,type,tid){
+  var btn=document.getElementById('stripeBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Redirecting...';
+  stripeInst.redirectToCheckout({lineItems:[{price:pid,quantity:1}],mode:(type==='monthly'||type==='yearly')?'subscription':'payment',successUrl:stripeIds.successUrl,cancelUrl:stripeIds.cancelUrl,customerEmail:currentUser?currentUser.email:undefined})
+    .then(function(r){if(r.error){btn.disabled=false;btn.textContent='Continue to Secure Checkout';alert(r.error.message);}});
+}
+
+// ── AUTH MODAL ────────────────────────────────────────────
+function requireAuthThen(fn){if(currentUser){fn();return;}pendingAction=fn;openAuth();}
+function openAuth(){renderAuthForm('signin');document.getElementById('authModal').classList.add('open');}
+function switchAuthTab(t){document.getElementById('tabSignIn').classList.toggle('active',t==='signin');document.getElementById('tabSignUp').classList.toggle('active',t==='signup');renderAuthForm(t);}
+function renderAuthForm(tab){
+  var si=tab==='signin';
+  document.getElementById('authContent').innerHTML=
+    '<h2>'+(si?'Welcome Back':'Create Account')+'</h2>'
+    +'<p style="color:var(--muted);font-size:.82rem;margin:.4rem 0 1.5rem;line-height:1.7;">'+(si?'Sign in to access your enrolled tracks.':'Join Mogul AI and start building.')+'</p>'
+    +'<button class="google-btn" onclick="signInWithGoogle()"><svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.1 29.2 35 24 35c-6.1 0-11-4.9-11-11s4.9-11 11-11c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.7 7.1 29.1 5 24 5 12.9 5 4 13.9 4 25s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c2.8 0 5.3 1 7.2 2.7l5.7-5.7C33.7 7.1 29.1 5 24 5c-7.7 0-14.3 4.4-17.7 10.7z"/><path fill="#4CAF50" d="M24 45c5 0 9.6-1.9 13-5l-6-5.2C29.3 36.5 26.8 37.5 24 37.5c-5.1 0-9.5-2.9-11.7-7.1l-6.5 5C9.5 40.6 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.9 2.5-2.5 4.6-4.7 6l6 5.2C42.5 36.6 44 31 44 25c0-1.3-.1-2.6-.4-3.9z"/></svg>Continue with Google</button>'
+    +'<div class="auth-divider"><span>or</span></div>'
+    +'<div class="form-group"><label>Email</label><input type="email" id="authEmail" placeholder="your@email.com"/></div>'
+    +'<div class="form-group"><label>Password</label><input type="password" id="authPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"/></div>'
+    +'<div id="authErr" class="err-msg"></div>'
+    +'<button class="modal-btn" id="authSubmitBtn" onclick="submitAuth(\''+tab+'\')">'+(si?'Sign In':'Create Account')+'</button>'
+    +'<p class="modal-note">'+(si?'No account? <span class="modal-link" onclick="switchAuthTab(\'signup\')">Sign up free</span>':'Have an account? <span class="modal-link" onclick="switchAuthTab(\'signin\')">Sign in</span>')+'</p>';
+}
+function submitAuth(tab){
+  var email=document.getElementById('authEmail').value.trim(),pw=document.getElementById('authPassword').value;
+  var err=document.getElementById('authErr'),btn=document.getElementById('authSubmitBtn');
+  if(!email||!pw){err.textContent='Please fill in all fields.';return;}
+  if(!sb){err.textContent='Auth not available.';return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner dark"></span>Please wait...';err.textContent='';
+  var p=tab==='signin'?sb.auth.signInWithPassword({email:email,password:pw}):sb.auth.signUp({email:email,password:pw});
+  p.then(function(r){
+    if(r.error){err.textContent=r.error.message;btn.disabled=false;btn.textContent=tab==='signin'?'Sign In':'Create Account';return;}
+    closeModal('authModal');
+    if(pendingAction){var fn=pendingAction;pendingAction=null;setTimeout(fn,300);}
+  }).catch(function(){err.textContent='Something went wrong.';btn.disabled=false;btn.textContent=tab==='signin'?'Sign In':'Create Account';});
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────
+function renderDashboard(){
+  var el=document.getElementById('dashContent');
+  if(!currentUser&&!isPreviewMode){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">00</div><p style="font-size:.84rem;margin-bottom:1.5rem;">Please sign in to access your library.</p><button class="btn-gold" style="padding:.85rem 2rem;" onclick="openAuth()">Sign In</button></div>';
+    return;
+  }
+  var mine=tracks.filter(function(t){return hasAccess(t.id);});
+  if(!mine.length){
+    el.innerHTML='<div class="empty-state">'
+      +'<div class="empty-icon">00</div>'
+      +'<p style="font-family:Cormorant Garamond,serif;font-size:1.4rem;font-weight:400;color:var(--navy);margin-bottom:.8rem;">Your library is empty</p>'
+      +'<p style="font-size:.84rem;color:var(--muted);max-width:400px;margin:0 auto 2rem;line-height:1.8;">You have not enrolled in any tracks yet. Browse the full curriculum and enroll in the tracks that match your goals.</p>'
+      +'<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">'
+      +'<button class="btn-gold" style="padding:.85rem 2rem;" onclick="showPage(\'tracks\')">Browse Tracks</button>'
+      +'<button class="btn-white" style="padding:.85rem 2rem;background:transparent;border:1px solid var(--border2);color:var(--navy);border-radius:3px;font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;" onclick="showPage(\'pricing\')">View Pricing</button>'
+      +'</div></div>';
+    return;
+  }
+  var sub=userSub?'<div class="notice">Active '+userSub+' subscription &mdash; full library unlocked.</div>':'';
+  var cards=mine.map(function(t){
+    var files=(t.files||[]);
+    var filesHTML='';
+    if(files.length){
+      filesHTML='<div style="margin-top:1rem;">'
+        +'<div style="font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;">Course Materials</div>'
+        +files.map(function(f){
+          // Check if it's a URL or just a filename
+          var isUrl=f.indexOf('http')===0||f.indexOf('supabase')!==-1;
+          var displayName=isUrl?f.split('/').pop():f;
+          var ext=(displayName.split('.').pop()||'').toLowerCase();
+          var icon=ext==='pdf'?'PDF':ext==='mp4'||ext==='mov'||ext==='avi'?'Video':'File';
+          if(isUrl){
+            return'<a href="'+f+'" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:space-between;padding:.55rem .8rem;background:var(--surface2);border:1px solid var(--border);margin-top:.3rem;text-decoration:none;transition:.2s;" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
+              +'<span style="font-size:.76rem;color:var(--navy);">'+displayName+'</span>'
+              +'<span style="font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:600;">'+icon+' &rarr;</span>'
+              +'</a>';
+          } else {
+            return'<div style="display:flex;align-items:center;justify-content:space-between;padding:.55rem .8rem;background:var(--surface2);border:1px solid var(--border);margin-top:.3rem;">'
+              +'<span style="font-size:.76rem;color:var(--muted);">'+displayName+'</span>'
+              +'<span style="font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);">'+icon+' &mdash; Link pending</span>'
+              +'</div>';
+          }
+        }).join('')
+        +'</div>';
+    } else {
+      filesHTML='<div style="font-size:.74rem;color:var(--muted2);margin-top:.8rem;padding:.6rem 0;border-top:1px solid var(--border);">Course materials coming soon</div>';
+    }
+    return'<div class="dash-card">'
+      +((t.cover_image&&t.cover_image.length>50)
+        ?'<img src="'+t.cover_image+'" style="width:100%;height:150px;object-fit:cover;display:block;" alt="'+t.title+'"/>'
+        :'<div class="dash-cover-ph" style="background:linear-gradient(135deg,'+t.color+',#243d6e);"><span class="dash-cover-num">'+t.emoji+'</span></div>')
+      +'<div class="dash-body">'
+      +'<div class="dash-tag">'+t.tag+' &mdash; Enrolled</div>'
+      +'<div class="dash-title">'+t.title+'</div>'
+      +'<p style="font-size:.78rem;color:var(--muted);line-height:1.7;margin-top:.3rem;">'+(t.description||'').substring(0,100)+'...</p>'
+      +filesHTML
+      +'</div></div>';
+  }).join('');
+  el.innerHTML=sub+'<div class="dash-grid">'+cards+'</div>';
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ── ADMIN ─────────────────────────────────────────────────
+function adminLogin(){
+  if(document.getElementById('adminPwInput').value===ADMIN_PW){document.getElementById('adminErr').style.display='none';document.getElementById('adminPwInput').value='';showPage('admin');}
+  else document.getElementById('adminErr').style.display='block';
+}
+function adminLogout(){showPage('home');}
+function adminTab(e,name){
+  document.querySelectorAll('.admin-tab').forEach(function(t){t.classList.remove('active');});e.target.classList.add('active');
+  document.querySelectorAll('.admin-section').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('admin'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
+  if(name==='tracks')loadTracks(renderAdminTracks);
+  if(name==='stripe')loadStripeFields();
+}
+function renderAdminTracks(){
+  var el=document.getElementById('adminTrackList');
+  if(!tracks.length){el.innerHTML='<div class="loading-state">No tracks yet.</div>';return;}
+  el.innerHTML=tracks.map(function(t){
+    var sid=t.stripe_id||'',hc=t.cover_image&&t.cover_image.length>50;
+    var fi=(t.files&&t.files.length)?t.files.map(function(f){return'<div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem .8rem;background:var(--bg);border:1px solid var(--border);margin-top:.3rem;font-size:.74rem;"><span style="color:var(--muted);">'+f+'</span><button onclick="adminOpenFile(\''+f+'\')" style="background:none;border:none;color:var(--gold);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;">Open &rarr;</button></div>';}).join(''):'<div style="font-size:.71rem;color:var(--muted2);padding:.4rem 0;">No files attached</div>';
+    return'<div class="admin-card">'
+      +'<div style="display:flex;align-items:center;gap:1rem;cursor:pointer;" onclick="toggleAt(\'at_'+t.id+'\')">'
+      +(hc?'<img src="'+t.cover_image+'" style="width:52px;height:52px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;" alt=""/>':'<div style="width:52px;height:52px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:Cormorant Garamond,serif;font-size:1rem;color:rgba(255,255,255,.3);flex-shrink:0;">'+(t.emoji||'01')+'</div>')
+      +'<div style="flex:1;min-width:0;"><div style="font-weight:500;font-size:.88rem;color:var(--navy);margin-bottom:.2rem;">'+t.title+'</div><div style="font-size:.7rem;color:var(--muted);">'+t.tag+' &mdash; '+(t.files?t.files.length:0)+' file(s) &mdash; '+(sid||'<span style="color:#dc2626;">No Stripe ID</span>')+'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:.6rem;flex-shrink:0;"><button class="btn-sm btn-edit" onclick="event.stopPropagation();editTrack('+t.id+')">Edit</button><button class="btn-sm btn-del" onclick="event.stopPropagation();deleteTrack('+t.id+')">Delete</button><span style="color:var(--muted2);font-size:.8rem;" id="ch_'+t.id+'">&#9660;</span></div></div>'
+      +'<div id="at_'+t.id+'" style="display:none;border-top:1px solid var(--border);margin-top:1rem;padding-top:1rem;">'
+      +'<div style="font-size:.67rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;">Files</div>'+fi
+      +'<div style="margin-top:1rem;"><div style="font-size:.67rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;">Description</div><p style="font-size:.79rem;color:var(--muted);line-height:1.75;">'+(t.description||'No description.')+'</p></div>'
+      +'</div></div>';
+  }).join('');
+}
+function toggleAt(id){var el=document.getElementById(id);if(!el)return;var tid=id.replace('at_','');var ch=document.getElementById('ch_'+tid);if(el.style.display==='none'){el.style.display='block';if(ch)ch.innerHTML='&#9650;';}else{el.style.display='none';if(ch)ch.innerHTML='&#9660;';}}
+function adminOpenFile(f){alert('File: '+f+'\n\nUpload to Supabase Storage and store the public URL to enable direct file opening.');}
+function handleCoverImage(e){var file=e.target.files[0];if(!file)return;var r=new FileReader();r.onload=function(ev){pendingCover=ev.target.result;var p=document.getElementById('coverPreview'),tx=document.getElementById('coverUploadText');p.src=pendingCover;p.style.display='block';tx.textContent=file.name;};r.readAsDataURL(file);}
+function editTrack(id){
+  var t=tracks.find(function(x){return x.id===id;});if(!t)return;
+  document.getElementById('addFormTitle').textContent='Edit Track';
+  document.getElementById('editingTrackId').value=id;
+  document.getElementById('newTitle').value=t.title;
+  document.getElementById('newTag').value=t.tag;
+  document.getElementById('newDesc').value=t.description||'';
+  document.getElementById('newEmoji').value=t.emoji||'';
+  document.getElementById('newColor').value=t.color;
+  document.getElementById('newStripeId').value=t.stripe_id||'';
+  pendingFiles=(t.files||[]).slice();pendingCover=t.cover_image||null;
+  if(pendingCover&&pendingCover.length>50){var p=document.getElementById('coverPreview');p.src=pendingCover;p.style.display='block';document.getElementById('coverUploadText').textContent='Current cover image';}
+  renderFileList();
+  document.getElementById('cancelEditBtn').style.display='inline-block';
+  document.querySelectorAll('.admin-tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.admin-tab')[1].classList.add('active');
+  document.querySelectorAll('.admin-section').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('adminAdd').classList.add('active');
+}
+function cancelEdit(){
+  document.getElementById('addFormTitle').textContent='Add New Track';
+  document.getElementById('editingTrackId').value='';
+  document.getElementById('cancelEditBtn').style.display='none';
+  ['newTitle','newTag','newDesc','newEmoji','newStripeId'].forEach(function(id){document.getElementById(id).value='';});
+  var p=document.getElementById('coverPreview');p.style.display='none';p.src='';
+  document.getElementById('coverUploadText').textContent='Click to upload cover image (JPG, PNG, WebP)';
+  pendingFiles=[];pendingCover=null;renderFileList();
+}
+function saveTrack(){
+  var title=document.getElementById('newTitle').value.trim(),desc=document.getElementById('newDesc').value.trim();
+  if(!title||!desc){alert('Title and description are required.');return;}
+  var editId=document.getElementById('editingTrackId').value;
+  var data={title:title,tag:document.getElementById('newTag').value.trim()||'Track',description:desc,emoji:document.getElementById('newEmoji').value.trim()||'01',color:document.getElementById('newColor').value,stripe_id:document.getElementById('newStripeId').value.trim(),files:pendingFiles.slice(),cover_image:pendingCover||''};
+  var btn=document.querySelector('#adminAdd .btn-gold');btn.disabled=true;btn.innerHTML='<span class="spinner dark"></span>Saving...';
+  rest(editId?'PATCH':'POST',editId?'tracks?id=eq.'+editId:'tracks',editId?data:[data],true)
+    .then(function(res){
+      btn.disabled=false;btn.textContent='Save Track';
+      if(res&&res.code){alert('DB error: '+(res.message||JSON.stringify(res)));return;}
+      showOk('saveStatus','Track saved successfully.');cancelEdit();
+      loadTracks(function(){renderAdminTracks();refreshViews();});
+    })
+    .catch(function(e){btn.disabled=false;btn.textContent='Save Track';alert('Error: '+e.message);});
+}
+function deleteTrack(id){
+  if(!confirm('Delete this track permanently?'))return;
+  rest('DELETE','tracks?id=eq.'+id,undefined,true)
+    .then(function(){loadTracks(function(){renderAdminTracks();refreshViews();});})
+    .catch(function(e){alert('Error: '+e.message);});
+}
+function showOk(id,msg){var el=document.getElementById(id);el.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';},3000);}
+async function handleFiles(e){
+  var files=Array.from(e.target.files);
+  if(!files.length)return;
+  var progress=document.getElementById('fileUploadProgress');
+  var bar=document.getElementById('fileProgressBar');
+  var txt=document.getElementById('fileProgressText');
+  progress.style.display='block';
+  for(var i=0;i<files.length;i++){
+    var file=files[i];
+    txt.textContent='Uploading '+file.name+'... ('+(i+1)+' of '+files.length+')';
+    bar.style.width=Math.round(((i+.5)/files.length)*100)+'%';
+    try{
+      var safeName=Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      var resp=await fetch(SB_URL+'/storage/v1/object/track-files/'+safeName,{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+SB_SVC,'Content-Type':file.type||'application/octet-stream','x-upsert':'true'},
+        body:file
+      });
+      if(resp.ok){
+        var publicUrl=SB_URL+'/storage/v1/object/public/track-files/'+safeName;
+        pendingFiles.push(publicUrl);
+        renderFileList();
+        txt.textContent='Uploaded: '+file.name;
+      } else {
+        var errData=await resp.json().catch(function(){return{};});
+        // Bucket may not exist yet — guide user
+        if(resp.status===404||resp.status===400){
+          txt.textContent='Error: Bucket not found. See setup instructions below.';
+          showStorageSetupNotice();
+        } else {
+          txt.textContent='Error uploading '+file.name+': '+(errData.message||resp.status);
+        }
+      }
+    } catch(err){
+      txt.textContent='Upload failed: '+err.message;
+    }
+    bar.style.width=Math.round(((i+1)/files.length)*100)+'%';
+  }
+  setTimeout(function(){progress.style.display='none';bar.style.width='0%';},3000);
+  document.getElementById('fileInput').value='';
+}
+
+function showStorageSetupNotice(){
+  var existing=document.getElementById('storageNotice');
+  if(existing)return;
+  var notice=document.createElement('div');
+  notice.id='storageNotice';
+  notice.style.cssText='background:#fef3c7;border:1px solid #fcd34d;padding:1rem;font-size:.78rem;color:#92400e;margin-top:.8rem;line-height:1.7;border-radius:2px;';
+  notice.innerHTML='<strong>One-time setup needed:</strong> You need to create a storage bucket in Supabase before uploading files.<br/><br/>'
+    +'1. Go to <strong>Supabase &rarr; Storage</strong><br/>'
+    +'2. Click <strong>"New bucket"</strong><br/>'
+    +'3. Name it exactly: <code style="background:rgba(0,0,0,.1);padding:.1rem .3rem;">track-files</code><br/>'
+    +'4. Toggle <strong>"Public bucket"</strong> ON<br/>'
+    +'5. Click <strong>"Create bucket"</strong><br/>'
+    +'6. Then try uploading again.';
+  document.getElementById('fileList').after(notice);
+}
+function renderFileList(){document.getElementById('fileList').innerHTML=pendingFiles.map(function(f,i){return'<div class="file-item"><span>'+f+'</span><button class="file-remove" onclick="removeFile('+i+')">Remove</button></div>';}).join('');}
+function loadStripeFields(){document.getElementById('stripeMonthlyId').value=stripeIds.monthly;document.getElementById('stripeYearlyId').value=stripeIds.yearly;document.getElementById('successUrl').value=stripeIds.successUrl;document.getElementById('cancelUrl').value=stripeIds.cancelUrl;}
+function saveStripeIds(){stripeIds.monthly=document.getElementById('stripeMonthlyId').value.trim();stripeIds.yearly=document.getElementById('stripeYearlyId').value.trim();stripeIds.successUrl=document.getElementById('successUrl').value.trim();stripeIds.cancelUrl=document.getElementById('cancelUrl').value.trim();showOk('stripeIdSuccess','Saved.');}
+function savePricing(){pricing.single=parseFloat(document.getElementById('priceSingle').value);pricing.monthly=parseFloat(document.getElementById('priceMonthly').value);pricing.yearly=parseFloat(document.getElementById('priceYearly').value);showOk('priceSuccess','Saved.');}
+
+// ── BOOT ──────────────────────────────────────────────────
+window.addEventListener('load',function(){
+  try{if(typeof Stripe!=='undefined')stripeInst=Stripe(STRIPE_PK);}catch(e){}
+  initAuth();
+  loadTracks(function(){
+    initRoute();
+    setTimeout(function(){initHeroCanvas();initScrollAnim();},120);
+  });
+});
+</script>
+</body>
+</html>
